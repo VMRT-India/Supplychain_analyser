@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+        }
+
+        .login-box {
+            background: rgba(255,255,255,0.05);
+            padding: 30px;
+            border-radius: 15px;
+            width: 300px;
+            backdrop-filter: blur(10px);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            background: #38bdf8;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="login-box">
+    <h2>Login</h2>
+
+    <div id="step-credentials">
+        <input id="email" placeholder="Email">
+        <input id="password" type="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div id="step-mfa" style="display:none;">
+        <p style="color:#94a3b8; font-size:13px; margin:0 0 10px 0;">Enter the 6-digit code from your authenticator app.</p>
+        <input id="mfaCode" placeholder="MFA Code" maxlength="6">
+        <button onclick="verifyMfa()">Verify</button>
+    </div>
+
+    <div id="loginStatus" style="margin-top:15px; padding:10px; border-radius:8px; display:none; font-family:monospace;"></div>
+    <a href="register.html" style="display:block; text-align:center; margin-top:15px; color:#94a3b8; font-size:13px; text-decoration:none;">Don't have an account? Register</a>
+</div>
+
+<script>
+let pendingMfaUserId = null;
+let pendingMfaRole = null;
+
+function showError(msg) {
+    const status = document.getElementById('loginStatus');
+    status.style.display = 'block';
+    status.style.background = '#dc2626';
+    status.innerText = msg;
+}
+
+async function login() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if (!email || !password) {
+        return showError('Email and password are required');
+    }
+
+    try {
+        const res = await fetch('http://127.0.0.1:8000/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+            return showError(data.error);
+        }
+
+        if (data.mfa_required) {
+            pendingMfaUserId = data.user_id;
+            pendingMfaRole = data.role;
+            document.getElementById('step-credentials').style.display = 'none';
+            document.getElementById('step-mfa').style.display = 'block';
+            document.getElementById('loginStatus').style.display = 'none';
+            document.getElementById('mfaCode').focus();
+            return;
+        }
+
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('role', data.role);
+        sessionStorage.setItem('name', data.name);
+        window.location.href = 'dashboard.html';
+
+    } catch {
+        showError('Server error');
+    }
+}
+
+async function verifyMfa() {
+    const code = document.getElementById('mfaCode').value.trim();
+    if (!code) return showError('MFA code is required');
+
+    try {
+        const res = await fetch('http://127.0.0.1:8000/verify-mfa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: pendingMfaUserId, code })
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+            return showError(data.error);
+        }
+
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('role', pendingMfaRole);
+        sessionStorage.setItem('name', pendingMfaRole);
+        window.location.href = 'dashboard.html';
+
+    } catch {
+        showError('Server error');
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.getElementById('step-mfa').style.display !== 'none') {
+        verifyMfa();
+    } else {
+        login();
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SupplyChain Analyzer</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: white;
+        }
+
+        .sidebar {
+            width: 240px;
+            height: 100vh;
+            background: #020617;
+            position: fixed;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            color: #38bdf8;
+        }
+
+        .sidebar button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            background: #1e293b;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .sidebar button:hover {
+            background: #38bdf8;
+            color: black;
+        }
+
+        .main {
+            margin-left: 260px;
+            padding: 25px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: none;
+        }
+
+        .btn {
+            margin-top: 15px;
+            padding: 10px;
+            background: #38bdf8;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            white-space: pre-line;
+            font-family: monospace;
+        }
+
+        .success {
+            background: #16a34a;
+        }
+
+        .error {
+            background: #dc2626;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <h2>Supply Chain Analyzer</h2>
+        <p id="userGreeting" style="color:#94a3b8; font-size:13px; margin:0 0 10px 0;"></p>
+        <button data-section="batch" onclick="UI.showSection('batch')">Create Batch</button>
+        <button data-section="score" onclick="UI.showSection('score')">Ethical Score</button>
+        <button data-section="iot" onclick="UI.showSection('iot')">IoT Data</button>
+        <button data-section="consumer" onclick="UI.showSection('consumer')">Consumer View</button>
+        <button data-section="supplier" onclick="UI.showSection('supplier')">Supplier Status</button>
+        <button data-section="certificate" onclick="UI.showSection('certificate')">Issue Certificate</button>
+        <button data-section="approve" onclick="UI.showSection('approve')">Approve Supplier</button>
+    </div>
+
+    <div class="main">
+
+        <div id="batch" class="card" style="display:none;">
+            <h3>Create Batch</h3>
+            <input id="componentName" placeholder="Component Name">
+            <input id="supplierId" placeholder="Supplier ID">
+            <button class="btn" onclick="API.createBatch()">Submit</button>
+            <div id="batchStatus" class="status"></div>
+        </div>
+
+        <div id="score" class="card" style="display:none;">
+            <h3>Check Ethical Score</h3>
+            <input id="componentId" placeholder="Component ID">
+            <button class="btn" onclick="API.getScore()">Calculate</button>
+            <div id="scoreStatus" class="status"></div>
+        </div>
+
+        <div id="iot" class="card" style="display:none;">
+            <h3>IoT Data Input</h3>
+            <input id="iotBatchId" placeholder="Batch ID">
+            <input id="temperature" placeholder="Temperature">
+            <input id="humidity" placeholder="Humidity">
+            <button class="btn" onclick="API.sendIoT()">Send Data</button>
+            <div id="iotStatus" class="status"></div>
+        </div>
+
+        <div id="consumer" class="card" style="display:none;">
+            <h3>Consumer View</h3>
+            <input id="batchId" placeholder="Enter Batch ID">
+            <button class="btn" onclick="API.getProduct()">View</button>
+            <div id="consumerStatus" class="status"></div>
+        </div>
+
+        <div id="supplier" class="card" style="display:none;">
+            <h3>Supplier Status</h3>
+            <input id="supplierIdInput" placeholder="Supplier ID">
+            <button class="btn" onclick="API.getSupplierStatus()">Check Status</button>
+            <div id="supplierStatusBox" class="status"></div>
+        </div>
+
+        <div id="certificate" class="card" style="display:none;">
+            <h3>Issue Ethical Certificate</h3>
+            <input id="certBatchId" placeholder="Batch ID">
+            <input id="certAuditorId" placeholder="Auditor ID">
+            <input id="certNotes" placeholder="Notes (optional)">
+            <button class="btn" onclick="API.issueCertificate()">Issue Certificate</button>
+            <div id="certStatus" class="status"></div>
+        </div>
+
+        <div id="approve" class="card" style="display:none;">
+            <h3>Approve Supplier</h3>
+            <input id="approveSupplierId" placeholder="Supplier ID">
+            <input id="approveAdminId" placeholder="Admin ID">
+            <select id="approveNewStatus" style="width:100%; padding:10px; margin-top:10px; border-radius:8px; border:none; background:white; color:#0f172a; cursor:pointer;">
+                <option value="Compliant">Compliant</option>
+                <option value="Violated">Violated</option>
+            </select>
+            <button class="btn" onclick="API.approveSupplier()">Update Status</button>
+            <div id="approveStatusBox" class="status"></div>
+        </div>
+
+    </div>
+
+    <script>
+
+        const UI = {
+            sections: ["batch", "score", "iot", "consumer", "supplier", "certificate", "approve"],
+
+            showSection(section) {
+                this.sections.forEach(sec => {
+                    document.getElementById(sec).style.display = "none";
+                });
+                document.getElementById(section).style.display = "block";
+            },
+
+            showStatus(id, message, type = "success") {
+                const el = document.getElementById(id);
+                el.style.display = "block";
+                el.className = `status ${type}`;
+                el.innerText = message;
+            }
+        };
+
+        const API = {
+
+            BASE_URL: "http://127.0.0.1:8000",
+
+            authHeaders() {
+                const token = sessionStorage.getItem('token');
+                return {
+                    "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                };
+            },
+
+            async createBatch() {
+                const component = componentName.value.trim();
+                const supplier = supplierId.value.trim();
+
+                if (!component || !supplier) {
+                    return UI.showStatus("batchStatus", "All fields required", "error");
+                }
+
+                const supplierIdNum = parseInt(supplier);
+                if (isNaN(supplierIdNum)) {
+                    return UI.showStatus("batchStatus", "Supplier must be number", "error");
+                }
+
+                try {
+                    const res = await fetch(`${this.BASE_URL}/create-batch`, {
+                        method: "POST",
+                        headers: this.authHeaders(),
+                        body: JSON.stringify({
+                            component_name: component,
+                            supplier_id: supplierIdNum
+                        })
+                    });
+
+                    const data = await res.json();
+
+                    UI.showStatus(
+                        "batchStatus",
+                        data.success
+                            ? `${data.data.message}\nBatch ID: ${data.data.batch_id}`
+                            : (data.error || data.detail || "Request failed"),
+                        data.success ? "success" : "error"
+                    );
+
+                } catch {
+                    UI.showStatus("batchStatus", "Server error", "error");
+                }
+            },
+
+            async getScore() {
+                const id = componentId.value.trim();
+
+                try {
+                    const res = await fetch(`${this.BASE_URL}/score/${id}`);
+                    const data = await res.json();
+
+                    UI.showStatus("scoreStatus", `Ethical Score: ${data.score}`);
+                } catch {
+                    UI.showStatus("scoreStatus", "Error", "error");
+                }
+            },
+
+            async sendIoT() {
+                const batch = iotBatchId.value.trim();
+                const temp = temperature.value.trim();
+                const humidityVal = document.getElementById('humidity').value.trim();
+
+                if (!batch || !temp || !humidityVal) {
+                    return UI.showStatus("iotStatus", "All fields required", "error");
+                }
+
+                const batchId = parseInt(batch);
+
+                try {
+                    const res = await fetch(`${this.BASE_URL}/iot-data`, {
+                        method: "POST",
+                        headers: this.authHeaders(),
+                        body: JSON.stringify({
+                            batch_id: batchId,
+                            temperature: temp,
+                            humidity: humidityVal
+                        })
+                    });
+
+                    const data = await res.json();
+
+                    UI.showStatus(
+                        "iotStatus",
+                        data.message || data.error,
+                        data.message?.includes("Violation") ? "error" : "success"
+                    );
+
+                } catch {
+                    UI.showStatus("iotStatus", "Error", "error");
+                }
+            },
+
+            async issueCertificate() {
+                const batchId   = document.getElementById('certBatchId').value.trim();
+                const auditorId = document.getElementById('certAuditorId').value.trim();
+                const notes     = document.getElementById('certNotes').value.trim();
+
+                if (!batchId || !auditorId) {
+                    return UI.showStatus("certStatus", "Batch ID and Auditor ID are required", "error");
+                }
+
+                try {
+                    const res = await fetch(`${this.BASE_URL}/issue-certificate`, {
+                        method: "POST",
+                        headers: this.authHeaders(),
+                        body: JSON.stringify({
+                            batch_id:   parseInt(batchId),
+                            auditor_id: parseInt(auditorId),
+                            notes
+                        })
+                    });
+                    const data = await res.json();
+                    UI.showStatus(
+                        "certStatus",
+                        data.success ? `Certificate issued! ID: ${data.certificate_id}` : data.error,
+                        data.success ? "success" : "error"
+                    );
+                } catch {
+                    UI.showStatus("certStatus", "Error", "error");
+                }
+            },
+
+            async approveSupplier() {
+                const supplierId = document.getElementById('approveSupplierId').value.trim();
+                const adminId    = document.getElementById('approveAdminId').value.trim();
+                const newStatus  = document.getElementById('approveNewStatus').value;
+
+                if (!supplierId || !adminId) {
+                    return UI.showStatus("approveStatusBox", "Supplier ID and Admin ID are required", "error");
+                }
+
+                try {
+                    const res = await fetch(`${this.BASE_URL}/approve-supplier`, {
+                        method: "POST",
+                        headers: this.authHeaders(),
+                        body: JSON.stringify({
+                            supplier_id:       parseInt(supplierId),
+                            admin_id:          parseInt(adminId),
+                            compliance_status: newStatus
+                        })
+                    });
+                    const data = await res.json();
+                    UI.showStatus(
+                        "approveStatusBox",
+                        data.success ? `${data.company_name} set to ${data.new_status}` : data.error,
+                        data.success ? (data.new_status === "Compliant" ? "success" : "error") : "error"
+                    );
+                } catch {
+                    UI.showStatus("approveStatusBox", "Error", "error");
+                }
+            },
+
+            async getSupplierStatus() {
+                const id = document.getElementById('supplierIdInput').value.trim();
+                if (!id) return UI.showStatus("supplierStatusBox", "Supplier ID required", "error");
+
+                try {
+                    const res = await fetch(`${this.BASE_URL}/supplier/${id}/status`, {
+                        headers: this.authHeaders()
+                    });
+                    const data = await res.json();
+
+                    if (!data.success) {
+                        return UI.showStatus("supplierStatusBox", data.error, "error");
+                    }
+
+                    UI.showStatus(
+                        "supplierStatusBox",
+                        `Company: ${data.company_name}\nStatus: ${data.compliance_status}`,
+                        data.compliance_status === "Compliant" ? "success" : "error"
+                    );
+                } catch {
+                    UI.showStatus("supplierStatusBox", "Error", "error");
+                }
+            },
+
+            async getProduct() {
+                const id = batchId.value.trim();
+
+                try {
+                    const res = await fetch(`${this.BASE_URL}/product/${id}`);
+                    const data = await res.json();
+
+                    if (data.message) {
+                        return UI.showStatus("consumerStatus", data.message, "error");
+                    }
+
+                    let output = `
+Product: ${data.product}
+Origin: ${data.origin}
+Ethical Score: ${data.ethical_score}
+Status: ${data.status}
+`;
+
+                    if (data.violations.length) {
+                        output += "\n⚠️ Violations:\n";
+                        data.violations.forEach(v => {
+                            output += `Temp: ${v.temperature}, Humidity: ${v.humidity}\n`;
+                        });
+                    }
+
+                    if (data.audit_logs.length) {
+                        output += "\n📜 Audit Trail:\n";
+                        data.audit_logs.slice(0, 3).forEach(l => {
+                            output += `- ${l.event}\n`;
+                        });
+                    }
+
+                    UI.showStatus(
+                        "consumerStatus",
+                        output,
+                        data.status === "Safe" ? "success" : "error"
+                    );
+
+                } catch {
+                    UI.showStatus("consumerStatus", "Error fetching product", "error");
+                }
+            }
+        };
+
+        const rolePermissions = {
+            'Supplier': ['batch', 'iot'],
+            'Auditor':  ['score', 'supplier', 'certificate'],
+            'Admin':    ['batch', 'score', 'iot', 'consumer', 'supplier', 'certificate', 'approve'],
+            'Consumer': ['consumer']
+        };
+
+        function initRBAC() {
+            const role = sessionStorage.getItem('role');
+            const name = sessionStorage.getItem('name');
+
+            if (!role) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            document.getElementById('userGreeting').innerText = `${name} (${role})`;
+
+            const allowed = rolePermissions[role] || [];
+
+            document.querySelectorAll('.sidebar button[data-section]').forEach(btn => {
+                btn.style.display = allowed.includes(btn.getAttribute('data-section')) ? 'block' : 'none';
+            });
+
+            if (allowed.length > 0) UI.showSection(allowed[0]);
+        }
+
+        initRBAC();
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            const visible = UI.sections.find(sec => document.getElementById(sec).style.display !== 'none');
+            const actions = {
+                batch:       () => API.createBatch(),
+                score:       () => API.getScore(),
+                iot:         () => API.sendIoT(),
+                consumer:    () => API.getProduct(),
+                supplier:    () => API.getSupplierStatus(),
+                certificate: () => API.issueCertificate(),
+                approve:     () => API.approveSupplier()
+            };
+            if (visible && actions[visible]) actions[visible]();
+        });
+
+    </script>
+
+</body>
+
+</html>

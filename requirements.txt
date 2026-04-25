@@ -1,0 +1,22 @@
+# Web framework & server
+fastapi==0.136.1
+uvicorn==0.46.0
+
+# Database
+sqlalchemy==2.0.49
+psycopg2-binary==2.9.12
+
+# Auth — password hashing, JWT (HS256), TOTP/MFA
+bcrypt==4.0.1
+python-jose[cryptography]==3.3.0
+pyotp==2.9.0
+
+# Provenance — QR code PNG generation
+qrcode[pil]==7.4.2
+
+# Utilities
+python-dotenv==1.0.1
+
+# Testing
+pytest==9.0.3
+httpx==0.28.1

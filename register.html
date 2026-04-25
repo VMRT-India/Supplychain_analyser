@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register — SupplyChain Analyzer</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+        }
+
+        .register-box {
+            background: rgba(255,255,255,0.05);
+            padding: 30px;
+            border-radius: 15px;
+            width: 300px;
+            backdrop-filter: blur(10px);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: none;
+            box-sizing: border-box;
+        }
+
+        select {
+            background: white;
+            color: #0f172a;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            background: #38bdf8;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            font-family: monospace;
+            white-space: pre-line;
+        }
+
+        .nav-link {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: #94a3b8;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .nav-link:hover { color: #38bdf8; }
+    </style>
+</head>
+
+<body>
+
+<div class="register-box">
+    <h2>Create Account</h2>
+    <input id="regName" placeholder="Full Name">
+    <input id="regEmail" placeholder="Email">
+    <input id="regPassword" type="password" placeholder="Password">
+    <select id="regRole">
+        <option value="">Select Role</option>
+        <option value="Supplier">Supplier</option>
+        <option value="Consumer">Consumer</option>
+    </select>
+    <button onclick="register()">Register</button>
+    <div id="regStatus" class="status"></div>
+    <a class="nav-link" href="login.html">Already have an account? Login</a>
+</div>
+
+<script>
+async function register() {
+    const name     = document.getElementById('regName').value.trim();
+    const email    = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value.trim();
+    const role     = document.getElementById('regRole').value;
+    const status   = document.getElementById('regStatus');
+
+    if (!name || !email || !password || !role) {
+        status.style.display = 'block';
+        status.style.background = '#dc2626';
+        status.innerText = 'All fields are required';
+        return;
+    }
+
+    try {
+        const res = await fetch('http://127.0.0.1:8000/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password, role })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            status.style.display = 'block';
+            status.style.background = '#16a34a';
+            status.innerText = `Account created!\nName: ${data.name}\nRole: ${data.role}\n\nYou can now login.`;
+        } else {
+            status.style.display = 'block';
+            status.style.background = '#dc2626';
+            status.innerText = data.error;
+        }
+    } catch {
+        status.style.display = 'block';
+        status.style.background = '#dc2626';
+        status.innerText = 'Server error';
+    }
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') register();
+});
+</script>
+
+</body>
+</html>

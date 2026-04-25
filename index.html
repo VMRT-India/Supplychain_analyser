@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupplyChain Analyzer</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+
+        /* ── Navbar ── */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            height: 64px;
+        }
+
+        .nav-brand {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #38bdf8;
+            letter-spacing: 0.03em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #94a3b8;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+        }
+
+        .nav-links a.primary {
+            background: #38bdf8;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .nav-links a.primary:hover {
+            background: #7dd3fc;
+            color: #0f172a;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            min-height: calc(100vh - 64px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 80px 24px;
+            background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(56,189,248,0.08) 0%, transparent 70%),
+                        linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: #38bdf8;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 6px 18px;
+            border-radius: 100px;
+            margin-bottom: 28px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.2rem, 5vw, 3.8rem);
+            font-weight: 800;
+            color: #f1f5f9;
+            line-height: 1.15;
+            margin-bottom: 24px;
+            max-width: 780px;
+        }
+
+        .hero h1 span {
+            color: #38bdf8;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            max-width: 620px;
+            margin-bottom: 44px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            padding: 13px 32px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: #38bdf8;
+            color: #0f172a;
+            box-shadow: 0 4px 24px rgba(56,189,248,0.25);
+        }
+
+        .btn-primary:hover {
+            background: #7dd3fc;
+            box-shadow: 0 6px 32px rgba(56,189,248,0.35);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #38bdf8;
+            border: 1.5px solid rgba(56,189,248,0.45);
+        }
+
+        .btn-outline:hover {
+            background: rgba(56,189,248,0.08);
+        }
+
+        /* ── Shared section ── */
+        section {
+            padding: 88px 48px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #38bdf8;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: clamp(1.6rem, 3vw, 2.2rem);
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 16px;
+        }
+
+        .section-sub {
+            font-size: 1rem;
+            color: #64748b;
+            max-width: 560px;
+            margin-bottom: 52px;
+        }
+
+        /* ── Features grid ── */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 14px;
+            padding: 28px 28px 32px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(56, 189, 248, 0.3);
+            background: rgba(56, 189, 248, 0.04);
+        }
+
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(56, 189, 248, 0.12);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+
+        .feature-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: #38bdf8;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .feature-card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.65;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            margin: 0 48px;
+        }
+
+        /* ── Roles ── */
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+        }
+
+        .role-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 14px;
+            padding: 28px 24px;
+            transition: border-color 0.2s;
+        }
+
+        .role-card:hover {
+            border-color: rgba(56, 189, 248, 0.25);
+        }
+
+        .role-tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 100px;
+            margin-bottom: 14px;
+        }
+
+        .tag-admin    { background: rgba(239,68,68,0.15);  color: #f87171; }
+        .tag-supplier { background: rgba(34,197,94,0.13);  color: #4ade80; }
+        .tag-auditor  { background: rgba(234,179,8,0.13);  color: #facc15; }
+        .tag-consumer { background: rgba(56,189,248,0.13); color: #38bdf8; }
+
+        .role-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 10px;
+        }
+
+        .role-card p {
+            font-size: 0.875rem;
+            color: #64748b;
+            line-height: 1.65;
+        }
+
+        /* ── CTA Banner ── */
+        .cta-section {
+            padding: 0 48px 96px;
+        }
+
+        .cta-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, rgba(56,189,248,0.1) 0%, rgba(99,102,241,0.08) 100%);
+            border: 1px solid rgba(56,189,248,0.2);
+            border-radius: 20px;
+            padding: 64px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .cta-inner h2 {
+            font-size: clamp(1.4rem, 2.5vw, 2rem);
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 8px;
+        }
+
+        .cta-inner p {
+            font-size: 0.95rem;
+            color: #64748b;
+        }
+
+        .cta-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        /* ── Footer ── */
+        footer {
+            background: #020617;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 28px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .footer-brand {
+            font-weight: 700;
+            color: #38bdf8;
+            font-size: 0.95rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-links a {
+            text-decoration: none;
+            color: #475569;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: #38bdf8;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <span class="nav-brand">SupplyChain Analyzer</span>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="login.html">Login</a>
+            <a href="register.html" class="primary">Register</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-badge">Supply Chain Provenance &amp; Ethical Tracking</div>
+        <h1>Full Visibility Across Every<br><span>Tier of Your Supply Chain</span></h1>
+        <p>
+            A centralized platform for end-to-end product traceability, ethical compliance enforcement,
+            real-time IoT monitoring, and transparent consumer reporting — from raw material to finished product.
+        </p>
+        <div class="hero-actions">
+            <a href="register.html" class="btn btn-primary">Get Started</a>
+            <a href="login.html" class="btn btn-outline">Login</a>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <section>
+        <div class="section-label">Core Features</div>
+        <h2 class="section-title">Everything the supply chain demands</h2>
+        <p class="section-sub">
+            Built around six functional pillars derived directly from production requirements.
+        </p>
+
+        <div class="features-grid">
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <h3>Provenance Tracking</h3>
+                <p>Register raw material batches and sub-assemblies with globally unique identifiers. Maintain full lineage from origin to final product with immutable records.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+                </div>
+                <h3>Recursive Supply Chain Modeling</h3>
+                <p>Represent multi-tier supplier hierarchies as self-referencing component trees. Traverse and aggregate data across unlimited depth without limitation.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <h3>Ethical Score Computation</h3>
+                <p>Compute and aggregate ethical scores across the full component tree. Scores reflect supplier compliance status, IoT conditions, and environmental metrics — recalculated on demand.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h3>Compliance Enforcement</h3>
+                <p>Block non-compliant batch insertions at the database level. Propagate violations across entire dependency trees and restore compliant suppliers automatically.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                </div>
+                <h3>IoT Data Integration</h3>
+                <p>Ingest real-time sensor readings per batch. Validate temperature and humidity against thresholds, flag violations, and queue score deductions as background tasks.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </div>
+                <h3>Consumer Transparency &amp; Audit Logging</h3>
+                <p>Expose full product provenance, compliance status, and event history to consumers via QR code. All system events are recorded in an append-only, categorised audit log.</p>
+            </div>
+
+        </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- Roles -->
+    <section>
+        <div class="section-label">User Roles</div>
+        <h2 class="section-title">Four roles. Controlled access.</h2>
+        <p class="section-sub">
+            Every role interacts through a role-gated dashboard. Permissions are enforced strictly at the backend level.
+        </p>
+
+        <div class="roles-grid">
+
+            <div class="role-card">
+                <span class="role-tag tag-admin">Admin</span>
+                <h3>Administrator</h3>
+                <p>Full system access. Approves or flags suppliers, triggers score recalculations, refreshes materialized views, and reviews all audit logs. Requires MFA.</p>
+            </div>
+
+            <div class="role-card">
+                <span class="role-tag tag-supplier">Supplier</span>
+                <h3>Supplier</h3>
+                <p>Registers product batches, submits IoT sensor data, and records ethical metrics such as carbon footprint and worker safety scores for their components.</p>
+            </div>
+
+            <div class="role-card">
+                <span class="role-tag tag-auditor">Auditor</span>
+                <h3>Auditor</h3>
+                <p>Reviews supplier compliance status, issues ethical certificates, and queries the audit log. Elevated access requires MFA verification at login.</p>
+            </div>
+
+            <div class="role-card">
+                <span class="role-tag tag-consumer">Consumer</span>
+                <h3>Consumer</h3>
+                <p>Read-only access to product history and provenance data. Can scan QR codes to retrieve origin, ethical score, compliance status, and audit events.</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <div class="cta-section">
+        <div class="cta-inner">
+            <div>
+                <h2>Ready to trace your supply chain?</h2>
+                <p>Create an account to get started, or log in if you already have one.</p>
+            </div>
+            <div class="cta-actions">
+                <a href="register.html" class="btn btn-primary">Create Account</a>
+                <a href="login.html" class="btn btn-outline">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <span class="footer-brand">SupplyChain Analyzer</span>
+        <div class="footer-links">
+            <a href="login.html">Login</a>
+            <a href="register.html">Register</a>
+            <a href="dashboard.html">Dashboard</a>
+        </div>
+    </footer>
+
+</body>
+</html>
