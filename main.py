@@ -66,6 +66,53 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# =========================
+# STARTUP — SEED MFA FOR ADMIN/AUDITOR
+# =========================
+@app.on_event("startup")
+def seed_mfa_on_startup():
+    db = SessionLocal()
+    try:
+        rows = db.execute(
+            text("""
+                SELECT user_id, name, email, role
+                FROM users
+                WHERE role IN ('Admin', 'Auditor')
+                AND (mfa_secret IS NULL OR mfa_secret = '')
+            """)
+        ).fetchall()
+
+        if not rows:
+            print("[MFA] All Admin/Auditor accounts already have MFA configured.")
+            return
+
+        for user_id, name, email, role in rows:
+            secret = pyotp.random_base32()
+            db.execute(
+                text("UPDATE users SET mfa_secret = :secret WHERE user_id = :id"),
+                {"secret": secret, "id": user_id}
+            )
+            totp_uri = pyotp.TOTP(secret).provisioning_uri(
+                name=email,
+                issuer_name="SupplyChain Analyzer"
+            )
+            print(f"\n{'='*50}")
+            print(f"[MFA SETUP] Role  : {role}")
+            print(f"[MFA SETUP] Name  : {name}")
+            print(f"[MFA SETUP] Email : {email}")
+            print(f"[MFA SETUP] Secret: {secret}")
+            print(f"[MFA SETUP] URI   : {totp_uri}")
+            print(f"{'='*50}\n")
+
+        db.commit()
+        print("[MFA] Secrets seeded. Scan the URIs above into your authenticator app.")
+
+    except Exception as e:
+        db.rollback()
+        print(f"[MFA] Startup seed failed: {e}")
+
+    finally:
+        db.close()
 
 # =========================
 # AUDIT LOG FUNCTION
@@ -618,7 +665,13 @@ def login(data: dict):
         user_id, name, role, _, mfa_secret = result
 
         # MFA required for Admin and Auditor if secret is configured
-        if role in ("Admin", "Auditor") and mfa_secret:
+        # MFA required for Admin and Auditor — hard block if not configured
+        if role in ("Admin", "Auditor"):
+            if not mfa_secret:
+                return {
+                    "success": False,
+                    "error": "MFA not configured. Call /setup-mfa to set it up first."
+                }
             return {
                 "success": True,
                 "mfa_required": True,
